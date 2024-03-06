@@ -1,0 +1,19 @@
+version: "2.1"
+services:
+  postgres:
+    image: postgres:13.3
+    container_name: postgres_url_shortener
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: url
+    volumes:
+      - ./pg_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d url"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
