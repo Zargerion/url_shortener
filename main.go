@@ -34,6 +34,7 @@ func main() {
 	defer cancel()
 
 	canUseHashTable := flag.Bool("d", false, "Enable HashTable DB")
+	flag.Parse()
 
 	htStore := hashtable.NewHashTableStore()
 

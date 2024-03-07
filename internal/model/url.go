@@ -31,6 +31,7 @@ func NewUrlModel(pg databases.PostgresClient, ht *hashtable.HashTableStore, flag
 // при запуске сервера.
 
 func (um *UrlModelImpl) GetFullUrlByShort(ctx context.Context, url string) (full_url string, err error) {
+	url = fmt.Sprintf("http://localhost:8080/%s", url)
 	if *um.flag {
 
 		full_url, ok := um.ht.GetValueByKey(url)
@@ -56,6 +57,8 @@ func (um *UrlModelImpl) GetFullUrlByShort(ctx context.Context, url string) (full
 // при запуске сервера.
 
 func (um *UrlModelImpl) PostUrlToGetShort(ctx context.Context, url string) (short_url string, err error) {
+	var rund_char string
+	original_url := url
 	if *um.flag {
 
 		// Тут используется относительно простая кастомная хеш-функция для получения шеша от полного урла.
@@ -65,14 +68,15 @@ func (um *UrlModelImpl) PostUrlToGetShort(ctx context.Context, url string) (shor
 		for i := 0; i < 100; i++ {
 			short_url = fmt.Sprintf("http://localhost:8080/%s", url_hash)
 			_, ok := um.ht.GetValueByKey(short_url)
-			if !ok {
-				url = fmt.Sprintf("%x", url + util.RandomSymbol())
+			if ok {
+				rund_char = util.RandomSymbol()
+				url = url + rund_char
 				url_hash = util.GenerateHash(url)
 				continue
 			}
 			break
 		}
-		um.ht.AddKeyValue(short_url, url)
+		um.ht.AddKeyValue(short_url, original_url)
 		return short_url, nil
 
 	} else {
@@ -82,11 +86,12 @@ func (um *UrlModelImpl) PostUrlToGetShort(ctx context.Context, url string) (shor
 		url_hash := util.GenerateHash(url)
 		for i := 0; i < 50; i++ {
 			short_url = fmt.Sprintf("http://localhost:8080/%s", url_hash)
-			_, err := um.pg.Exec(context.Background(), query, short_url, url)
+			_, err := um.pg.Exec(context.Background(), query, short_url, original_url)
 			if err != nil {
 				var pgErr *pgconn.PgError
 				if errors.As(err, &pgErr) && pgErr.Code == "23505" { // Код ошибки для нарушения уникальности
-					url = fmt.Sprintf("%x", url + util.RandomSymbol())
+					rund_char = util.RandomSymbol()
+					url = url + rund_char
 					url_hash = util.GenerateHash(url)
 					continue
 				}

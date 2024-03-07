@@ -42,11 +42,7 @@ func (uc *UrlController) PostUrlToGetShort(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	var url string
-	if err := c.ShouldBind(&url); err != nil {
-		c.String(http.StatusBadRequest, "Не удалось прочитать тело запроса.")
-		return
-	}
+	url := c.PostForm("url")
 
 	ans, err := uc.m.PostUrlToGetShort(ctx, url)
 	if err != nil {
